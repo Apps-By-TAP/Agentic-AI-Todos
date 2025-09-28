@@ -1,0 +1,60 @@
+﻿@page "/"
+@using AgenticTodos.Shared
+@using System.Text.Json;
+@using System.Text
+
+<PageTitle>To Do's</PageTitle>
+
+<h1>To Do List:</h1>
+
+<div>
+    <div style="display: flex; gap: 30px; flex-wrap: wrap; overflow: scroll;">
+
+        @foreach (Todo todo in _todos)
+        {
+            <div style="border: 1px solid black; border-radius: 25px; padding: 20px;">
+                <h2>@todo.Title</h2>
+                <p>@todo.DueDate</p>
+                <p>@todo.Content</p>
+            </div>
+        }
+
+    </div>
+    <div style="flex: 1;"></div>
+    <input @bind-value=_prompt type="text" style="height: 200px;" />
+    <br />
+    <button @onclick=SubmitPrompt >Submit</button>
+</div>
+
+
+@code {
+    private List<Todo> _todos = new List<Todo>();
+    private string _prompt = string.Empty;
+
+    [Inject]
+    public HttpClient Http { get; set; }
+
+    private async Task SubmitPrompt()
+    {
+        var response = await Http.PostAsync("/api/Todo/CreateToDo", new StringContent(JsonSerializer.Serialize(new CreateToDoRequest
+        {
+            Prompt = _prompt
+        }),Encoding.UTF8, "application/json"));
+
+        if(response.IsSuccessStatusCode)
+        {
+            string content = await response.Content.ReadAsStringAsync();
+
+            if (content.ToLower().Contains("todo created"))
+            {
+                var getTodos = await Http.GetAsync("/api/Todo/GetToDos");
+
+                if(getTodos.IsSuccessStatusCode)
+                {
+                    string json = await getTodos.Content.ReadAsStringAsync();
+                    _todos = System.Text.Json.JsonSerializer.Deserialize<List<Todo>>(json);
+                }
+            }
+        }
+    }
+}
