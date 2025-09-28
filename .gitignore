@@ -416,3 +416,4 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+/AgenticTodos/AgenticTodos/AgenticTodos/Properties/launchSettings.json
